@@ -19,15 +19,20 @@ jobs:
 
     - name: Install dependencies
       run: |
-        pip install notebook nbconvert jupyterlab matplotlib seaborn pandas
+        pip install notebook nbconvert matplotlib seaborn pandas
 
     - name: Convert notebook to HTML
       run: |
         jupyter nbconvert notebooks/sales_analysis.ipynb --to html --output sales_analysis.html
 
+    - name: Make pages directory
+      run: |
+        mkdir public
+        mv sales_analysis.html public/
+
     - name: Deploy to GitHub Pages
       uses: peaceiris/actions-gh-pages@v3
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
-        publish_dir: .  # publish current dir (HTML will be at root)
+        publish_dir: ./public
 
