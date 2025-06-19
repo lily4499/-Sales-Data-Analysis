@@ -1,0 +1,33 @@
+name: Build and Deploy Sales Analysis HTML
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  build-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repo
+      uses: actions/checkout@v3
+
+    - name: Setup Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: 3.11
+
+    - name: Install dependencies
+      run: |
+        pip install notebook nbconvert jupyterlab matplotlib seaborn pandas
+
+    - name: Convert notebook to HTML
+      run: |
+        jupyter nbconvert notebooks/sales_analysis.ipynb --to html --output sales_analysis.html
+
+    - name: Deploy to GitHub Pages
+      uses: peaceiris/actions-gh-pages@v3
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        publish_dir: .  # publish current dir (HTML will be at root)
+
