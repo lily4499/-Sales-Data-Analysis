@@ -286,3 +286,49 @@ crontab -e
 
 ---
 
+---
+
+
+### 🎯 Business Question:
+
+👉 What are the **monthly sales trends** for our products?
+
+---
+
+### ✅ Just "Descriptive Analysis":
+
+| Item             | What you're doing?       | Tool                                       |
+| ---------------- | ------------------------ | ------------------------------------------ |
+| **Trends**       | Monthly sales trends     | line plot (matplotlib/seaborn)             |
+| **Top products** | Which products sell most | bar plot (matplotlib/seaborn)              |
+| **Correlation**  | Discount % vs Quantity   | correlation calculation (pandas `.corr()`) |
+
+---
+
+### ✅ Why "No ML required"?
+
+* You are **not trying to predict the future**
+* You are **not classifying or clustering** data
+* You are simply **exploring existing data** and showing **visual trends**
+
+---
+
+### Summary:
+
+| Action           | What it answers                            |
+| ---------------- | ------------------------------------------ |
+| **Trends**       | Do we sell more in certain months?         |
+| **Top products** | Which products generate most revenue?      |
+| **Correlation**  | Does discount % increase quantity ordered? |
+
+---
+
+### Result = Descriptive Insights (NO ML)
+
+* Business can **increase stock** for top sellers in Q4
+* Can decide whether discounts are helping or not
+* All based on **plots and summary statistics** — no need for ML model.
+
+---
+
+
