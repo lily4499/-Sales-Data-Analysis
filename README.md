@@ -1,182 +1,288 @@
 
 
-## 1. Dataset Selection
+**kaggle CLI tool**
+```
+pip install kaggle
 
-We'll use **Sample Sales Data** from Kaggle – it contains order info, sales, customer, and shipping data ideal for monthly trends .
+Go to Kaggle > My Account
+Scroll down to API → Click Create New API Token → it will download a file called kaggle.json
+Move this file to:
+mkdir -p ~/.kaggle
+mv ~/Downloads/kaggle.json ~/.kaggle/
+chmod 600 ~/.kaggle/kaggle.json
+
+kaggle datasets list -s sales
+
+```
+
+
+
+# 🎯 Sales Data Analysis
+
+👉 *Business Question:* **What are the monthly sales trends for our products?**
 
 ---
 
-## 2. Project Setup (CLI)
+# 1️⃣ Define Problem
 
-```bash
-# 1. Create a project directory
-mkdir sales-trends && cd sales-trends
+**Purpose:**
 
-# 2. Initialize a Python environment
-python3 -m venv venv && source venv/bin/activate
-pip install pandas matplotlib seaborn jupyter
-
-# 3. Download the CSV (manually from Kaggle UI or use Kaggle CLI)
-kaggle datasets download kyanyoga/sample-sales-data -f SampleSalesData.csv
-unzip sample-sales-data.zip
-```
+* Identify product trends over time
+* Understand which products sell well
+* Help business stock inventory better for Q4
 
 ---
 
-## 3. Folder Structure
+# 2️⃣ Full Project Setup
 
-```
-sales-trends/
+### 🗂️ Directory Structure:
+
+```text
+sales-data-analysis/
 ├── data/
-│   └── SampleSalesData.csv
+│   └── sample_sales_data.csv
 ├── notebooks/
-│   └── EDA.ipynb
-├── src/
-│   ├── clean_data.py
-│   └── analyze.py
-└── requirements.txt
+│   └── sales_analysis.ipynb
+├── scripts/
+│   └── clean_and_plot.py
+├── output/
+│   ├── monthly_sales.png
+│   ├── top_products.png
+│   └── cleaned_sales_data.csv
+├── requirements.txt
+└── README.md
 ```
-
-`requirements.txt` captures your dependencies (pandas, seaborn, matplotlib).
 
 ---
 
-## 4. Data Cleaning (`src/clean_data.py`)
+# 3️⃣ CLI — Full Setup from Scratch
 
-```python
-import pandas as pd
-
-def clean_sales(in_path, out_path):
-    df = pd.read_csv(in_path, parse_dates=['Order Date'])
-    df = df.drop_duplicates(subset='Order ID')
-    df = df[df['Order Date'].notna()]
-    df['YearMonth'] = df['Order Date'].dt.to_period('M')
-    df['Sales'] = df['Quantity Ordered'] * df['Price Each']
-    df.to_csv(out_path, index=False)
-
-if __name__ == '__main__':
-    clean_sales('../data/SampleSalesData.csv', '../data/cleaned_sales.csv')
-```
-
-**CLI usage:**
+### a) Create Project Directory:
 
 ```bash
-python src/clean_data.py
+# Step 1: Create project folder
+mkdir sales-data-analysis
+cd sales-data-analysis
+
+# Step 2: Create folders
+mkdir data notebooks scripts output
+
+# Step 3: Create virtual environment
+python3 -m venv venv
+
+# Step 4: Activate virtual environment
+source venv/bin/activate  # Linux/Mac
+# venv\Scripts\activate   # Windows
+
+# Step 5: Create requirements.txt
+echo "pandas==2.2.2
+matplotlib==3.8.4
+seaborn==0.13.2
+jupyter==1.0.0" > requirements.txt
+
+# Step 6: Install dependencies
+pip install -r requirements.txt
 ```
 
 ---
 
-## 5. Exploratory Analysis (`src/analyze.py`)
+# 4️⃣ Get the Data
+
+### a) Download from Kaggle:
+
+👉 [Kaggle: Sample Sales Data](https://www.kaggle.com/datasets/kyanyoga/sample-sales-data)
+
+### b) Save CSV:
+
+```bash
+# Move CSV into data/
+mv ~/Downloads/sample_sales_data.csv data/sample_sales_data.csv
+```
+
+---
+
+# 5️⃣ Clean Data — Handle Missing Dates & Duplicates
+
+### Purpose:
+
+* Clean the raw data
+* Prepare "YearMonth" for trends
+* Save cleaned data
+
+### CLI:
+
+```bash
+# Create script file
+touch scripts/clean_and_plot.py
+```
+
+### File: `scripts/clean_and_plot.py`
 
 ```python
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-def analyze(in_path):
-    df = pd.read_csv(in_path, parse_dates=['Order Date'])
-    monthly_sales = df.groupby('YearMonth')['Sales'].sum().reset_index()
-    monthly_sales['YearMonth'] = monthly_sales['YearMonth'].dt.to_timestamp()
-    
-    plt.figure(figsize=(12, 6))
-    sns.lineplot(data=monthly_sales, x='YearMonth', y='Sales', marker='o')
-    plt.title('Monthly Sales Trend')
-    plt.xlabel('Month')
-    plt.ylabel('Total Sales ($)')
-    plt.xticks(rotation=45)
-    plt.tight_layout()
-    plt.savefig('monthly_sales.png')
-    plt.show()
-    
-    top_products = (df.groupby('Product')['Sales']
-                    .sum().sort_values(ascending=False).head(10))
-    plt.figure(figsize=(10, 6))
-    sns.barplot(x=top_products.values, y=top_products.index)
-    plt.title('Top 10 Products (by Sales)')
-    plt.xlabel('Total Sales ($)')
-    plt.tight_layout()
-    plt.savefig('top_products.png')
-    plt.show()
-    
-if __name__ == '__main__':
-    analyze('../data/cleaned_sales.csv')
-```
+# Load raw data
+#df = pd.read_csv('data/sample_sales_data.csv', parse_dates=['ORDERDATE'])
 
-**CLI usage:**
+# Load CSV with correct encoding!
+df = pd.read_csv('data/sample_sales_data.csv', parse_dates=['ORDERDATE'], encoding='latin1')
 
-```bash
-python src/analyze.py
+
+# Clean: remove rows with missing dates
+df = df.dropna(subset=['ORDERDATE'])
+
+# Clean: drop duplicate rows
+df = df.drop_duplicates()
+
+# Create YearMonth column for trends
+df['YearMonth'] = df['ORDERDATE'].dt.to_period('M')
+
+# Save cleaned data
+df.to_csv('output/cleaned_sales_data.csv', index=False)
+
+print("✅ Cleaned data saved to output/cleaned_sales_data.csv")
 ```
 
 ---
 
-## 6. Statistical Analysis (Discount vs. Volume)
+# 6️⃣ Explore Data
 
-Enhance cleaning to include discount:
+### Purpose:
+
+* See **monthly trends**
+* See **top 10 products**
+
+### Extend `scripts/clean_and_plot.py`:
 
 ```python
-df_clean = df.dropna(subset=['Discount %'])
-corr = df_clean['Discount %'].corr(df_clean['Quantity Ordered'])
-print(f"Correlation between discount and volume: {corr:.2f}")
+# Monthly sales trend
+monthly_sales = df.groupby('YearMonth')['SALES'].sum().reset_index()
+monthly_sales['YearMonth'] = monthly_sales['YearMonth'].dt.to_timestamp()
+
+plt.figure(figsize=(12, 6))
+sns.lineplot(data=monthly_sales, x='YearMonth', y='SALES', marker='o')
+plt.title('Monthly Sales Trend')
+plt.xlabel('Month')
+plt.ylabel('Total Sales ($)')
+plt.xticks(rotation=45)
+plt.tight_layout()
+plt.savefig('output/monthly_sales.png')
+plt.close()
+
+# Top 10 products by sales
+top_products = df.groupby('PRODUCTCODE')['SALES'].sum().sort_values(ascending=False).head(10)
+
+plt.figure(figsize=(10, 6))
+sns.barplot(x=top_products.values, y=top_products.index)
+plt.title('Top 10 Products by Sales')
+plt.xlabel('Total Sales ($)')
+plt.tight_layout()
+plt.savefig('output/top_products.png')
+plt.close()
+
+print("✅ Plots saved in output/: monthly_sales.png, top_products.png")
 ```
 
-Add this snippet at the end of `analyze.py`, interpret results (e.g. positive correlation suggests discounts drive volume).
+---
+
+# 7️⃣ Statistical Analysis — Correlation
+
+### Purpose:
+
+* See if discounts increase quantity ordered
+* Dataset doesn’t have discounts — **simulate**:
+
+```python
+# Simulate discount %
+df['discount_percent'] = 100 - (df['PRICEEACH'] / df['MSRP'] * 100)
+
+# Correlation between discount % and quantity
+correlation = df['discount_percent'].corr(df['QUANTITYORDERED'])
+print(f"Correlation between discount % and quantity ordered: {correlation:.2f}")
+```
 
 ---
 
-## 7. Jupyter Notebook (`notebooks/EDA.ipynb`)
+# 8️⃣ No model needed — Descriptive
 
-Replicate the above steps interactively:
+**Just analysis** — no ML required
 
-* Data loading & inspection
-* Cleaning checks
-* Visualizations inline
-* Discount-volume scatter plot + correlation value
-
----
-
-## 8. Recommendations
-
-* Increase stock/inventory **Q4** for the **Top 3 products** based on October–December trends.
-* Consider **more aggressive discounts** if correlation shows they uplift sales volume significantly.
-* Generate a monthly dashboard from the saved `monthly_sales.png` and `top_products.png`.
+* Trends
+* Top products
+* Correlation
 
 ---
 
-## 9. (Optional) Automation
+# 9️⃣ Visualization
 
-Using Excel: import the cleaned CSV into Power Query, build charts, and set up monthly data refresh via “Refresh All”.
+**Output Plots:**
 
-Or script automations (e.g., cron job):
+```text
+output/monthly_sales.png
+output/top_products.png
+
+cp output/monthly_sales.png /mnt/c/Users/lilia/Desktop/
+cp output/top_products.png /mnt/c/Users/lilia/Desktop/
+
+
+```
+
+---
+
+# 🔟 Recommendation
+
+From monthly\_sales.png:
+
+✅ Increase inventory of top products for Q4 (Oct-Dec)
+
+---
+
+# 🔁 Automation — Refresh Monthly
+
+**Option 1: Manual CLI**
 
 ```bash
-0 0 1 * * cd /path/sales-trends && \
-git pull && \
-source venv/bin/activate && \
-python src/clean_data.py && \
-python src/analyze.py
+python scripts/clean_and_plot.py
+```
+
+**Option 2: Cronjob (Linux)**
+
+```bash
+# Run on 1st of every month at 8am
+crontab -e
+
+# Add line:
+0 8 1 * * /path/to/venv/bin/python /path/to/sales-data-analysis/scripts/clean_and_plot.py
 ```
 
 ---
 
-## Files Overview
+# Final README.md Example
 
-* **data/SampleSalesData.csv** — source raw data
-* **data/cleaned\_sales.csv** — processed data
-* **src/clean\_data.py** — cleaning logic
-* **src/analyze.py** — EDA & analysis logic (line/bar charts + discount correlation)
-* **notebooks/EDA.ipynb** — interactive exploration + plots + interpretations
+```markdown
+# 📊 Sales Data Analysis
+
+## Business Question:
+👉 What are the monthly sales trends for our products?
+
+## Project Steps:
+✅ Define problem  
+✅ Get CSV from Kaggle  
+✅ Clean data  
+✅ Plot monthly sales  
+✅ Plot top products  
+✅ Correlation between discount & volume  
+✅ Visualization with matplotlib  
+✅ Recommendation: stock top sellers in Q4  
+✅ Automation option (cronjob)
+
+## Outputs:
+- output/monthly_sales.png
+- output/top_products.png
+- output/cleaned_sales_data.csv
+```
 
 ---
 
-This project pipeline shows:
-
-1. **Problem definition** – monthly sales trends + top products.
-2. **Data ingestion** via Kaggle CSV.
-3. **Cleaning** duplicates, missing dates.
-4. **EDA visualizations**: trend lines + bar charts.
-5. **Statistical insight**: discount vs. volume correlation.
-6. **Recommendations** for inventory and discounting.
-7. **Reproducibility**: reusable scripts & clear folder structure.
-
-You can clone this structure, run the scripts, and you'll have a self‑contained sales‑trends analysis. Want to dive deeper (e.g., segmentation, seasonality decomposition)? I can show how.
